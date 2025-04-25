@@ -152,6 +152,191 @@ paths:
           description: Bad request (invalid input data)
         '500':
           description: Internal server error
+
+  /positions/{id}/candidates:
+    get:
+      summary: Get candidates by position
+      description: Returns all candidates who have applied to a specific position, including their current interview step and average score.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the position
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of candidates for the position
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    candidateId:
+                      type: integer
+                      description: The unique identifier of the candidate
+                    fullName:
+                      type: string
+                      description: Full name of the candidate (firstName + lastName)
+                    email:
+                      type: string
+                      description: Email address of the candidate
+                    currentInterviewStep:
+                      type: object
+                      description: Current interview step for this candidate
+                      properties:
+                        id:
+                          type: integer
+                          description: ID of the interview step
+                        name:
+                          type: string
+                          description: Name of the interview step
+                        orderIndex:
+                          type: integer
+                          description: Order index of the step in the interview flow
+                    averageScore:
+                      type: number
+                      format: float
+                      nullable: true
+                      description: Average score of all interviews for this application (null if no interviews with scores)
+                    applicationDate:
+                      type: string
+                      format: date-time
+                      description: Date when the candidate applied
+                    candidate:
+                      type: object
+                      description: Complete candidate information
+                      properties:
+                        id:
+                          type: integer
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+                        email:
+                          type: string
+                        phone:
+                          type: string
+                        address:
+                          type: string
+                        educations:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Education'
+                        workExperiences:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/WorkExperience'
+                        resumes:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Resume'
+        '400':
+          description: Bad request (invalid position ID)
+        '404':
+          description: Position not found
+        '500':
+          description: Internal server error
+
+  /positions/{id}/candidates/{candidateId}/stage:
+    put:
+      summary: Update candidate interview stage
+      description: Updates the current interview step for a specific candidate in a position.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the position
+          schema:
+            type: integer
+            format: int64
+        - name: candidateId
+          in: path
+          required: true
+          description: ID of the candidate
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - stageId
+              properties:
+                stageId:
+                  type: integer
+                  description: ID of the new interview step
+                notes:
+                  type: string
+                  description: Optional notes about the stage change
+      responses:
+        '200':
+          description: Candidate stage updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: ID of the application
+                      candidateId:
+                        type: integer
+                        description: ID of the candidate
+                      candidateName:
+                        type: string
+                        description: Full name of the candidate
+                      positionId:
+                        type: integer
+                        description: ID of the position
+                      positionTitle:
+                        type: string
+                        description: Title of the position
+                      previousStage:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: ID of the previous interview step
+                          name:
+                            type: string
+                            description: Name of the previous interview step
+                      currentStage:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: ID of the current interview step
+                          name:
+                            type: string
+                            description: Name of the current interview step
+                      applicationDate:
+                        type: string
+                        format: date-time
+                        description: Date when the candidate applied
+                      notes:
+                        type: string
+                        nullable: true
+                        description: Notes about the application
+        '400':
+          description: Bad request (invalid input data)
+        '404':
+          description: Resource not found (position, candidate, interview step, or application)
+        '500':
+          description: Internal server error
+
   /upload:
     post:
       summary: Upload a file
@@ -185,4 +370,56 @@ paths:
           description: Invalid file type, only PDF and DOCX are allowed
         '500':
           description: Error during the file upload process
+
+components:
+  schemas:
+    Education:
+      type: object
+      properties:
+        id:
+          type: integer
+        institution:
+          type: string
+        title:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+    
+    WorkExperience:
+      type: object
+      properties:
+        id:
+          type: integer
+        company:
+          type: string
+        position:
+          type: string
+        description:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+    
+    Resume:
+      type: object
+      properties:
+        id:
+          type: integer
+        filePath:
+          type: string
+        fileType:
+          type: string
+        uploadDate:
+          type: string
+          format: date-time
 
