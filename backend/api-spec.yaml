@@ -152,6 +152,125 @@ paths:
           description: Bad request (invalid input data)
         '500':
           description: Internal server error
+  /positions/{id}/candidates:
+    get:
+      summary: Get candidates for a specific position
+      description: Retrieves all candidates that are in the process for a specific position, including their current interview stage and average score.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID of the position
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number (starting from 1)
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of items per page (max 50)
+      responses:
+        '200':
+          description: List of candidates for the position
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  candidates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: Candidate ID
+                        full_name:
+                          type: string
+                          description: Full name of the candidate
+                        current_interview_step:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: ID of the interview step
+                            name:
+                              type: string
+                              description: Name of the interview step
+                        average_score:
+                          type: number
+                          format: float
+                          nullable: true
+                          description: Average score from all interviews
+                  total:
+                    type: integer
+                    description: Total number of candidates for this position
+                  position:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: Position ID
+                      title:
+                        type: string
+                        description: Title of the position
+              example:
+                candidates:
+                  - id: 1
+                    full_name: "Albert Saelices"
+                    current_interview_step:
+                      id: 2
+                      name: "Technical Interview"
+                    average_score: 4.5
+                  - id: 2
+                    full_name: "María García"
+                    current_interview_step:
+                      id: 1
+                      name: "Initial Screening"
+                    average_score: 3.7
+                total: 2
+                position:
+                  id: 1
+                  title: "Software Engineer"
+        '400':
+          description: Bad request (invalid position ID or pagination parameters)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+        '404':
+          description: Position not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
   /upload:
     post:
       summary: Upload a file

@@ -3,6 +3,7 @@ import { validateCandidateData } from '../validator';
 import { Education } from '../../domain/models/Education';
 import { WorkExperience } from '../../domain/models/WorkExperience';
 import { Resume } from '../../domain/models/Resume';
+import { Application } from '../../domain/models/Application';
 
 export const addCandidate = async (candidateData: any) => {
     try {
@@ -61,5 +62,56 @@ export const findCandidateById = async (id: number): Promise<Candidate | null> =
     } catch (error) {
         console.error('Error al buscar el candidato:', error);
         throw new Error('Error al recuperar el candidato');
+    }
+};
+
+export const getAllCandidates = async (page: number = 1, pageSize: number = 20) => {
+    try {
+        // Validar parámetros de paginación
+        if (isNaN(page) || page <= 0) {
+            throw new Error('El parámetro "page" debe ser un número entero positivo');
+        }
+        
+        if (isNaN(pageSize) || pageSize <= 0) {
+            throw new Error('El parámetro "pageSize" debe ser un número entero positivo');
+        }
+        
+        // Usar el método del modelo para obtener todos los candidatos
+        return await Candidate.findAll(page, pageSize);
+    } catch (error: any) {
+        console.error('Error al obtener todos los candidatos:', error);
+        throw error;
+    }
+};
+
+/**
+ * Actualiza la etapa de entrevista de un candidato
+ * @param candidateId ID del candidato
+ * @param interviewStepId ID de la nueva etapa de entrevista
+ * @returns Información actualizada del candidato con las etapas previa y actual
+ */
+export const updateCandidateStage = async (candidateId: number, interviewStepId: number) => {
+    try {
+        // Validar parámetros
+        if (isNaN(candidateId) || candidateId <= 0) {
+            throw new Error('ID de candidato inválido');
+        }
+        
+        if (isNaN(interviewStepId) || interviewStepId <= 0) {
+            throw new Error('ID de etapa de entrevista inválido');
+        }
+        
+        // Buscar la aplicación activa del candidato
+        const application = await Application.findByCandidateId(candidateId);
+        
+        if (!application) {
+            throw new Error('El candidato no tiene una aplicación activa');
+        }
+        
+        // Actualizar la etapa de entrevista usando el método del modelo Application
+        return await Application.updateInterviewStep(application.id!, interviewStepId);
+    } catch (error: any) {
+        console.error('Error al actualizar la etapa del candidato:', error);
+        throw error;
     }
 };

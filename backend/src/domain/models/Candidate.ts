@@ -160,4 +160,50 @@ export class Candidate {
         if (!data) return null;
         return new Candidate(data);
     }
+
+    static async findAll(page: number = 1, pageSize: number = 20): Promise<{ candidates: Candidate[], total: number }> {
+        // Validar y limitar parámetros de paginación
+        const limitPageSize = Math.min(Math.max(1, pageSize), 50);
+        const skip = (Math.max(1, page) - 1) * limitPageSize;
+
+        try {
+            // Obtener los candidatos con paginación
+            const candidates = await prisma.candidate.findMany({
+                skip,
+                take: limitPageSize,
+                include: {
+                    educations: true,
+                    workExperiences: true,
+                    resumes: true,
+                    applications: {
+                        include: {
+                            position: {
+                                select: {
+                                    id: true,
+                                    title: true
+                                }
+                            }
+                        }
+                    }
+                },
+                orderBy: {
+                    id: 'desc'
+                }
+            });
+
+            // Contar el total de candidatos
+            const total = await prisma.candidate.count();
+
+            // Convertir los datos a instancias de la clase Candidate
+            const candidateInstances = candidates.map(data => new Candidate(data));
+
+            return {
+                candidates: candidateInstances,
+                total
+            };
+        } catch (error) {
+            console.error('Error al buscar candidatos:', error);
+            throw new Error('Error al recuperar los candidatos');
+        }
+    }
 }
